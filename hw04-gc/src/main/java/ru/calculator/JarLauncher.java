@@ -38,6 +38,7 @@ public class JarLauncher {
             int memoryMb = startMemoryMb + i * stepMemoryMb;
             List<String> command = new ArrayList<>();
             command.add("java");
+            command.add("-Xms" + memoryMb + "m");
             command.add("-Xmx" + memoryMb + "m");
             command.add("-XX:+HeapDumpOnOutOfMemoryError");
             command.add("-XX:HeapDumpPath=./logs/heapdump.hprof");
@@ -94,7 +95,7 @@ public class JarLauncher {
         try {
             int startMemoryMb = 256;
             int stepMemoryMb = 256;
-            int runs = 20;
+            int runs = 15;
 
             String[] jarPaths = {"C:\\Otus\\CalcDemo.jar", "C:\\Otus\\CalcDemoOptimised.jar"};
 
