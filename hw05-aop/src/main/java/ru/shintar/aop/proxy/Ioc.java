@@ -6,26 +6,26 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.shintar.aop.annotation.Log;
-import ru.shintar.aop.api.TestLoggingInterface;
 
 public class Ioc {
     private static final Logger logger = LoggerFactory.getLogger(Ioc.class);
 
-    public static TestLoggingInterface createProxy(
-            Class<TestLoggingInterface> interfaceClass, TestLoggingInterface target) {
+    @SuppressWarnings("unchecked")
+    public static <T> T createProxy(Class<T> interfaceClass, T target) {
         InvocationHandler handler = new LoggingInvocationHandler<>(interfaceClass, target);
-        return (TestLoggingInterface)
-                Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] {interfaceClass}, handler);
+        return (T)
+                Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass}, handler);
     }
 
     static class LoggingInvocationHandler<T> implements InvocationHandler {
         private final T target;
         private final Set<Method> methodsToLog;
 
-        public LoggingInvocationHandler(Class<?> interfaceClass, T target) {
+        public LoggingInvocationHandler(Class<T> interfaceClass, T target) {
             this.target = target;
             this.methodsToLog = Arrays.stream(interfaceClass.getMethods())
                     .filter(m -> {
