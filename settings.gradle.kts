@@ -3,7 +3,6 @@ rootProject.name = "Java-Dev-Pro-2025"
 
 include("hw01-gradle")
 include("hw02-generics")
-include("hw05-aop")
 
 
 pluginManagement {
