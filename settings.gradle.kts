@@ -3,6 +3,7 @@ rootProject.name = "Java-Dev-Pro-2025"
 
 include("hw01-gradle")
 include("hw02-generics")
+include("hw07-patterns")
 
 
 pluginManagement {
