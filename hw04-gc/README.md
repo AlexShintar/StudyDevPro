@@ -1,4 +1,5 @@
-В первом случае оптимальное значение достигло при 2048MB кэша, к этому моменту число сборок GC уменьшилось с 228 до 28
+В первом случае оптимальное значение достигло при 2048MB кэша,
+значение 57095 - погрешность измерений, при повторных тестах оптимальное также около 2048
 11:19:39.788 [main] INFO ru.calculator.JarLauncher -- Memory(MB) |   Time(ms)
 11:19:39.790 [main] INFO ru.calculator.JarLauncher -- -----------------------
 11:19:39.806 [main] INFO ru.calculator.JarLauncher --        256 |      59862
@@ -17,7 +18,7 @@
 11:19:39.808 [main] INFO ru.calculator.JarLauncher --       3584 |      54342
 11:19:39.808 [main] INFO ru.calculator.JarLauncher --       3840 |      50621
 
-При оптимизации число сборок стартовало со 138 и достигло 27 при размере кэша 1280MB
+При оптимизации уже после 512Mb размер кэша не приводил к существенному ускорению.
 11:31:57.432 [main] INFO ru.calculator.JarLauncher -- Memory(MB) |   Time(ms)
 11:31:57.432 [main] INFO ru.calculator.JarLauncher -- -----------------------
 11:31:57.432 [main] INFO ru.calculator.JarLauncher --        256 |      53032
