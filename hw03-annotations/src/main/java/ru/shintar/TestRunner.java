@@ -39,49 +39,66 @@ public class TestRunner {
 
     private static void executeTests(Class<?> testClass, TestContext context) {
         for (Method test : context.testMethods) {
-            LOGGER.info("=== Running test: {} ===", test.getName());
-            boolean beforePassed = true;
-            Object instance;
+            executeTest(testClass, context, test);
+        }
+    }
 
+    private static void executeTest(Class<?> testClass, TestContext context, Method test) {
+        LOGGER.info("=== Running test: {} ===", test.getName());
+
+        Object instance = createTestInstance(testClass, context, test);
+        if (instance == null) return;
+
+        if (!invokeBeforeMethods(instance, context, test)) return;
+
+        invokeTestMethod(instance, context, test);
+        invokeAfterMethods(instance, context);
+    }
+
+    private static Object createTestInstance(Class<?> testClass, TestContext context, Method test) {
+        try {
+            return testClass.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            LOGGER.error("[SKIP] {} due to error creating instance: {}", test.getName(), e.getMessage());
+            markTestFailed(context, test.getName());
+            return null;
+        }
+    }
+
+    private static boolean invokeBeforeMethods(Object instance, TestContext context, Method test) {
+        try {
+            for (Method before : context.beforeMethods) {
+                before.invoke(instance);
+            }
+            return true;
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            LOGGER.error("[SKIP] {} due to error in @Before", test.getName());
+            markTestFailed(context, test.getName());
+            return false;
+        }
+    }
+
+    private static void invokeTestMethod(Object instance, TestContext context, Method test) {
+        try {
+            test.invoke(instance);
+            LOGGER.info("[PASS] {}", test.getName());
+            context.passed++;
+            context.passedTests.add(test.getName());
+        } catch (InvocationTargetException e) {
+            LOGGER.error("[FAIL] {}", test.getName());
+            markTestFailed(context, test.getName());
+        } catch (Exception e) {
+            LOGGER.error("[ERROR] {}", test.getName());
+            markTestFailed(context, test.getName());
+        }
+    }
+
+    private static void invokeAfterMethods(Object instance, TestContext context) {
+        for (Method after : context.afterMethods) {
             try {
-                instance = testClass.getDeclaredConstructor().newInstance();
+                after.invoke(instance);
             } catch (Exception e) {
-                LOGGER.error("[SKIP] {} due to error creating instance: {}", test.getName(), e.getMessage());
-                markTestFailed(context, test.getName());
-                continue;
-            }
-
-            try {
-                for (Method before : context.beforeMethods) {
-                    before.invoke(instance);
-                }
-            } catch (InvocationTargetException | IllegalAccessException e) {
-                LOGGER.error("[SKIP] {} due to error in @Before", test.getName());
-                markTestFailed(context, test.getName());
-                beforePassed = false;
-            }
-
-            if (beforePassed) {
-                try {
-                    test.invoke(instance);
-                    LOGGER.info("[PASS] {}", test.getName());
-                    context.passed++;
-                    context.passedTests.add(test.getName());
-                } catch (InvocationTargetException e) {
-                    LOGGER.error("[FAIL] {}", test.getName());
-                    markTestFailed(context, test.getName());
-                } catch (Exception e) {
-                    LOGGER.error("[ERROR] {}", test.getName());
-                    markTestFailed(context, test.getName());
-                }
-
-                for (Method after : context.afterMethods) {
-                    try {
-                        after.invoke(instance);
-                    } catch (Exception e) {
-                        LOGGER.warn("[ERROR in @After] {}", after.getName());
-                    }
-                }
+                LOGGER.warn("[ERROR in @After] {}", after.getName());
             }
         }
     }
