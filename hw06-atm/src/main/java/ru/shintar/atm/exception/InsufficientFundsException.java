@@ -1,7 +1,10 @@
 package ru.shintar.atm.exception;
 
-public class InsufficientFundsException extends Exception {
-    public InsufficientFundsException(String message) {
-        super(message);
+import ru.shintar.atm.domain.Denomination;
+
+public class InsufficientFundsException extends RuntimeException {
+
+    public InsufficientFundsException(Denomination denomination) {
+        super("Not enough bills of " + denomination);
     }
 }

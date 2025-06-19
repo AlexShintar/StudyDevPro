@@ -4,7 +4,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import ru.shintar.atm.domain.Denomination;
 import ru.shintar.atm.exception.CannotDispenseAmountException;
-import ru.shintar.atm.exception.InsufficientFundsException;
 import ru.shintar.atm.repository.CashRepository;
 import ru.shintar.atm.strategy.DispenseStrategy;
 
@@ -30,9 +29,9 @@ public class AtmImpl implements Atm {
 
     @Override
     public Map<Denomination, Integer> withdraw(int amount)
-            throws CannotDispenseAmountException, InsufficientFundsException {
+            throws CannotDispenseAmountException {
         if (amount > getTotalBalance()) {
-            throw new InsufficientFundsException("Insufficient funds");
+            throw new CannotDispenseAmountException("Insufficient funds");
         }
         Map<Denomination, Integer> toDispense = strategy.dispense(amount, getBalance());
         repository.remove(toDispense);

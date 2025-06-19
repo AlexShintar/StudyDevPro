@@ -27,7 +27,7 @@ public class CashCell {
 
     public void remove(int n) throws InsufficientFundsException {
         if (n < 0) throw new IllegalArgumentException("Cannot remove negative count");
-        if (n > count) throw new InsufficientFundsException("Not enough bills of " + denomination);
+        if (n > count) throw new InsufficientFundsException(denomination);
         count -= n;
     }
 }

@@ -32,7 +32,7 @@ public class InMemoryCashRepository implements CashRepository {
         for (var entry : dispensed.entrySet()) {
             CashCell cell = cells.get(entry.getKey());
             if (cell == null || cell.getCount() < entry.getValue()) {
-                throw new InsufficientFundsException("Not enough " + entry.getKey());
+                throw new InsufficientFundsException(entry.getKey());
             }
         }
         for (var entry : dispensed.entrySet()) {
