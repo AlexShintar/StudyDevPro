@@ -11,6 +11,8 @@ include("hw07-patterns")
 include("hw08-io")
 include("hw09-jdbc")
 include("hw10-jpql")
+include("hw15-executors")
+include("hw16-concurrentCollections")
 
 
 pluginManagement {
