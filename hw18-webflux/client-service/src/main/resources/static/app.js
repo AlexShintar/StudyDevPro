@@ -3,7 +3,7 @@ let stompClient = null;
 const chatLineElementId = "chatLine";
 const roomIdElementId = "roomId";
 const messageElementId = "message";
-
+const BIG_BROTHER_ROOM = "1408";
 
 const setConnected = (connected) => {
     const connectBtn = document.getElementById("connect");
@@ -13,6 +13,13 @@ const setConnected = (connected) => {
     disconnectBtn.disabled = !connected;
     const chatLine = document.getElementById(chatLineElementId);
     chatLine.hidden = !connected;
+}
+
+const toggleSendVisibility = (visible) => {
+    const sendBtn = document.getElementById("send");
+    const msgInput = document.getElementById(messageElementId);
+    sendBtn.style.display = visible ? "" : "none";
+    msgInput.style.display = visible ? "" : "none";
 }
 
 const connect = () => {
@@ -26,6 +33,7 @@ const connect = () => {
         const topicNameUser = `/user/${userName}${topicName}`;
         stompClient.subscribe(topicName, (message) => showMessage(JSON.parse(message.body).messageStr));
         stompClient.subscribe(topicNameUser, (message) => showMessage(JSON.parse(message.body).messageStr));
+        toggleSendVisibility(roomId !== BIG_BROTHER_ROOM);
     });
 }
 
@@ -34,6 +42,10 @@ const disconnect = () => {
         stompClient.disconnect();
     }
     setConnected(false);
+    // Для очистки чата
+    document.getElementById(chatLineElementId).innerHTML = '';
+    // Возвращаем элементы на место
+    toggleSendVisibility(true);
     console.log("Disconnected");
 }
 

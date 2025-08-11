@@ -23,6 +23,8 @@ public class MessageController {
 
     private static final String TOPIC_TEMPLATE = "/topic/response.";
 
+    private static final long BIG_BROTHER_ROOM = 1408L;
+
     private final WebClient datastoreClient;
     private final SimpMessagingTemplate template;
 
@@ -34,10 +36,20 @@ public class MessageController {
     @MessageMapping("/message.{roomId}")
     public void getMessage(@DestinationVariable("roomId") String roomId, Message message) {
         logger.info("get message:{}, roomId:{}", message, roomId);
+
+        if (String.valueOf(BIG_BROTHER_ROOM).equals(roomId)) {
+            logger.warn("sending to BIG_BROTHER_ROOM is forbidden; roomId:{}", roomId);
+            return;
+        }
+
         saveMessage(roomId, message).subscribe(msgId -> logger.info("message send id:{}", msgId));
 
         template.convertAndSend(
                 String.format("%s%s", TOPIC_TEMPLATE, roomId), new Message(HtmlUtils.htmlEscape(message.messageStr())));
+
+        template.convertAndSend(
+                String.format("%s%s", TOPIC_TEMPLATE, BIG_BROTHER_ROOM),
+                new Message(HtmlUtils.htmlEscape("[" + roomId + "] " + message.messageStr())));
     }
 
     @EventListener
@@ -58,7 +70,7 @@ public class MessageController {
             return;
         }
         logger.info("subscription for:{}, roomId:{}, user:{}", simpDestination, roomId, principal.getName());
-        // /user/f6532733-51db-4d0e-bd00-1267dddc7b21/topic/response.1
+
         getMessagesByRoomId(roomId)
                 .doOnError(ex -> logger.error("getting messages for roomId:{} failed", roomId, ex))
                 .subscribe(message -> template.convertAndSendToUser(principal.getName(), simpDestination, message));
@@ -84,9 +96,14 @@ public class MessageController {
     }
 
     private Flux<Message> getMessagesByRoomId(long roomId) {
+        final String uri = (roomId == BIG_BROTHER_ROOM) ? "/msg" : String.format("/msg/%s", roomId);
+        return fetchMessages(uri);
+    }
+
+    private Flux<Message> fetchMessages(String uri) {
         return datastoreClient
                 .get()
-                .uri(String.format("/msg/%s", roomId))
+                .uri(uri)
                 .accept(MediaType.APPLICATION_NDJSON)
                 .exchangeToFlux(response -> {
                     if (response.statusCode().equals(HttpStatus.OK)) {
