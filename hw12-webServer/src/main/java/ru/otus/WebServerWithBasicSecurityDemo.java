@@ -1,55 +1,61 @@
 package ru.otus;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.net.URI;
-import org.eclipse.jetty.security.HashLoginService;
-import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.util.resource.PathResourceFactory;
-import org.eclipse.jetty.util.resource.Resource;
-import ru.otus.dao.InMemoryUserDao;
-import ru.otus.dao.UserDao;
-import ru.otus.helpers.FileSystemHelper;
-import ru.otus.server.UsersWebServer;
-import ru.otus.server.UsersWebServerWithBasicSecurity;
-import ru.otus.services.TemplateProcessor;
+import org.hibernate.cfg.Configuration;
+import ru.otus.core.repository.DataTemplateHibernate;
+import ru.otus.core.repository.HibernateUtils;
+import ru.otus.core.sessionmanager.TransactionManagerHibernate;
+import ru.otus.crm.model.Address;
+import ru.otus.crm.model.Client;
+import ru.otus.crm.model.Phone;
+import ru.otus.crm.service.DBServiceClient;
+import ru.otus.crm.service.DbInitializer;
+import ru.otus.crm.service.DbServiceClientImpl;
+import ru.otus.server.ClientsWebServerWithBasicSecurity;
+import ru.otus.services.AuthServiceFactory;
 import ru.otus.services.TemplateProcessorImpl;
 
 /*
-    Полезные для демо ссылки
-
     // Стартовая страница
     http://localhost:8080
 
-    // Страница пользователей
-    http://localhost:8080/users
+    // Список клиентов (логин/пароль admin)
+    http://localhost:8080/clients
 
-    // REST сервис
-    http://localhost:8080/api/user/3
 */
 public class WebServerWithBasicSecurityDemo {
     private static final int WEB_SERVER_PORT = 8080;
     private static final String TEMPLATES_DIR = "/templates/";
-    private static final String HASH_LOGIN_SERVICE_CONFIG_NAME = "realm.properties";
-    private static final String REALM_NAME = "AnyRealm";
+    private static final String HIBERNATE_CFG_FILE = "hibernate.cfg.xml";
 
     public static void main(String[] args) throws Exception {
-        UserDao userDao = new InMemoryUserDao();
-        Gson gson = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
-        TemplateProcessor templateProcessor = new TemplateProcessorImpl(TEMPLATES_DIR);
+        var cfg = new Configuration().configure(HIBERNATE_CFG_FILE);
 
-        String hashLoginServiceConfigPath =
-                FileSystemHelper.localFileNameOrResourceNameToFullPath(HASH_LOGIN_SERVICE_CONFIG_NAME);
-        PathResourceFactory pathResourceFactory = new PathResourceFactory();
-        Resource configResource = pathResourceFactory.newResource(URI.create(hashLoginServiceConfigPath));
+        var url = cfg.getProperty("hibernate.connection.url");
+        var user = cfg.getProperty("hibernate.connection.username");
+        var pass = cfg.getProperty("hibernate.connection.password");
 
-        LoginService loginService = new HashLoginService(REALM_NAME, configResource);
-        // LoginService loginService = new InMemoryLoginServiceImpl(userDao); // NOSONAR
+        new DbInitializer(url, user, pass, null).executeMigrations();
 
-        UsersWebServer usersWebServer =
-                new UsersWebServerWithBasicSecurity(WEB_SERVER_PORT, loginService, userDao, gson, templateProcessor);
+        var dbServiceClient = getDbServiceClient(cfg);
 
-        usersWebServer.start();
-        usersWebServer.join();
+        new DbInitializer(url, user, pass, dbServiceClient).populateDbWithRandomData();
+
+        var authService = new AuthServiceFactory().createAuthService();
+
+        var templateProcessor = new TemplateProcessorImpl(TEMPLATES_DIR);
+
+        var clientsWebServer =
+                new ClientsWebServerWithBasicSecurity(WEB_SERVER_PORT, authService, dbServiceClient, templateProcessor);
+
+        clientsWebServer.start();
+        clientsWebServer.join();
+    }
+
+    private static DBServiceClient getDbServiceClient(Configuration hibernateConfig) {
+        var sessionFactory =
+                HibernateUtils.buildSessionFactory(hibernateConfig, Client.class, Address.class, Phone.class);
+        var transactionManager = new TransactionManagerHibernate(sessionFactory);
+        var clientTemplate = new DataTemplateHibernate<>(Client.class);
+        return new DbServiceClientImpl(transactionManager, clientTemplate);
     }
 }

@@ -10,9 +10,17 @@ dependencies {
     implementation("org.eclipse.jetty:jetty-io")
     implementation("org.eclipse.jetty:jetty-util")
     implementation("org.freemarker:freemarker")
+    implementation("net.datafaker:datafaker:2.4.4")
+    implementation("org.hibernate.orm:hibernate-core")
+    implementation("org.postgresql:postgresql")
+    implementation("org.projectlombok:lombok")
+    implementation("org.flywaydb:flyway-core")
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.mockito:mockito-junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    annotationProcessor("org.projectlombok:lombok")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
 }
