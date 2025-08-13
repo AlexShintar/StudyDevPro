@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5430/demoDB
+    username: usr
+    password: pwd
+    driver-class-name: org.postgresql.Driver
+application:
+  database:
+    init-data: true
+logging:
+  level:
+    ROOT: ERROR
+    org.apache.catalina.connector.ClientAbortException: OFF

@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Library - Clients</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <h2>Clients</h2>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Phones</th>
+        </tr>
+        </thead>
+        <tbody id="client-table-body">
+        </tbody>
+    </table>
+    <button id="show-form-btn" class="btn btn-success btn-sm">New client</button>
+
+    <div id="client-form" class="panel panel-default" style="display: none; margin-top: 20px;">
+        <div class="panel-heading">
+            <h4>Add New Client</h4>
+        </div>
+        <div class="panel-body">
+            <form id="new-client-form">
+                <div class="form-group">
+                    <label for="client-name">Name:</label>
+                    <input type="text" class="form-control" id="client-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="client-address">Address:</label>
+                    <input type="text" class="form-control" id="client-address" required>
+                </div>
+                <div class="form-group">
+                    <label for="client-phones">Phones (comma separated):</label>
+                    <input type="text" class="form-control" id="client-phones" placeholder="123-456-7890, 098-765-4321">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Client</button>
+                <button type="button" id="cancel-btn" class="btn btn-default">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadClients();
+
+        document.getElementById('show-form-btn').addEventListener('click', function() {
+            document.getElementById('client-form').style.display = 'block';
+            this.style.display = 'none';
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', function() {
+            hideForm();
+        });
+
+        document.getElementById('new-client-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('client-name').value;
+            const address = document.getElementById('client-address').value;
+            const phonesInput = document.getElementById('client-phones').value;
+            const phones = phonesInput ? phonesInput.split(',').map(phone => phone.trim()) : [];
+
+            const clientData = {
+                name: name,
+                address: address,
+                phones: phones
+            };
+
+            fetch('/api/v1/client', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(clientData)
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to create client");
+                    return response.json();
+                })
+                .then(client => {
+                    hideForm();
+                    loadClients();
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Failed to create client.");
+                });
+        });
+    });
+
+    function loadClients() {
+        fetch('/api/v1/client')
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to load clients");
+                return response.json();
+            })
+            .then(clients => {
+                const tableBody = document.getElementById('client-table-body');
+                tableBody.innerHTML = '';
+                clients.forEach(client => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td>${client.id}</td>
+                    <td>${client.name}</td>
+                    <td>
+                        <div>${client.address ? client.address.street : 'No address'}</div>
+                    </td>
+                    <td>
+                        <small class="text-info">${(client.phones || []).map(p => p.number).join(', ')}</small>
+                    </td>
+                `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to load clients.");
+            });
+    }
+
+    function hideForm() {
+        document.getElementById('client-form').style.display = 'none';
+        document.getElementById('show-form-btn').style.display = 'inline-block';
+        document.getElementById('new-client-form').reset();
+    }
+</script>
+</body>
+</html>
