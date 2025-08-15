@@ -13,6 +13,8 @@ include("hw09-jdbc")
 include("hw10-jpql")
 include("hw11-cache")
 include("hw16-concurrentCollections")
+include("hw18-webflux:client-service")
+include("hw18-webflux:datastore-service")
 
 
 pluginManagement {
