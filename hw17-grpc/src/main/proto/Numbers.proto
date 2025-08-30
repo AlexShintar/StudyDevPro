@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package numbers;
+
+option java_multiple_files = true;
+option java_package = "ru.otus";
+option java_outer_classname = "Hw17Grpc";
+
+service NumbersService {
+    rpc Generate (RangeRequest) returns (stream NumberValue);
+}
+
+message RangeRequest {
+    int32 firstValue = 1;
+    int32 lastValue  = 2;
+}
+
+message NumberValue {
+    int32 value = 1;
+}
